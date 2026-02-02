@@ -51,4 +51,18 @@ public class ForecastController {
             return ResponseEntity.status(500).body(null);
         }
     }
+
+    @GetMapping("/deepDive")
+    public ResponseEntity<List<com.intuit.bqml.model.ExplanationResult>> getDeepDive() {
+        try {
+            List<com.intuit.bqml.model.ExplanationResult> results = bigQueryServiceImpl.getDeepDiveExplanations();
+            return ResponseEntity.ok(results);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(500).build();
+        } catch (RuntimeException e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(500).body(null);
+        }
+    }
 }

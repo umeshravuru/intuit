@@ -150,4 +150,43 @@ public class BigQueryServiceImpl implements BigQueryService {
 
         return results;
     }
+
+    @Override
+    public List<com.intuit.bqml.model.ExplanationResult> getDeepDiveExplanations() throws InterruptedException {
+        String sql = "SELECT\n" +
+                "  Category,\n" +
+                "  current_month,\n" +
+                "  ROUND(revenue_pct_change * 100, 1) AS revenue_change_pct,\n" +
+                "  explanation\n" +
+                "FROM ecommerce.category_explanations\n" +
+                "ORDER BY current_month;";
+
+        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(sql).build();
+
+        JobId jobId = JobId.of(UUID.randomUUID().toString());
+        Job queryJob = bigQuery.create(JobInfo.newBuilder(queryConfig).setJobId(jobId).build());
+
+        queryJob = queryJob.waitFor();
+
+        if (queryJob == null) {
+            throw new RuntimeException("Job no longer exists");
+        } else if (queryJob.getStatus().getError() != null) {
+            throw new RuntimeException(queryJob.getStatus().getError().toString());
+        }
+
+        TableResult result = queryJob.getQueryResults();
+
+        List<com.intuit.bqml.model.ExplanationResult> results = new ArrayList<>();
+        for (FieldValueList row : result.iterateAll()) {
+            String category = row.get("Category").getStringValue();
+            String currentMonth = row.get("current_month").getStringValue();
+            Double revenueChangePct = row.get("revenue_change_pct").getDoubleValue();
+            String explanation = row.get("explanation").getStringValue();
+
+            results.add(
+                    new com.intuit.bqml.model.ExplanationResult(category, currentMonth, revenueChangePct, explanation));
+        }
+
+        return results;
+    }
 }

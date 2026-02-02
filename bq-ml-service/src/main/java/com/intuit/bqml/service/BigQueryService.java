@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface BigQueryService {
     List<ForecastResult> getForecast(String userId, String timeGrain, int periodCount) throws InterruptedException;
+    List<com.intuit.bqml.model.ExplanationResult> getDeepDiveExplanations() throws InterruptedException;
 }
